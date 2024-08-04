@@ -27,6 +27,7 @@ app.add_middleware(
 
 API_URL = "https://api.ai71.ai/v1/chat/completions"
 API_KEY = os.getenv("FALCON_API_KEY")
+print(API_KEY)
 
 active_websockets = set()
 
@@ -112,41 +113,27 @@ async def analyze_medical_report(report_content: str) -> dict:
             logger.info(f"Processing chunk {i+1} of {len(chunks)}")
 
             prompt = f"""
-            Analyze the following part of a medical report and extract key information. 
-            Return the results in a JSON format with the following structure:
+            You are an educational course generator. You have 2 goals:
+            1. Teach the user about whatever input they give you, adding your own knowledge onto said input.
+            2. Teach the user about whatever topic they ask you.
+
+            Create a 3-day course on the text, covering the concepts from easiest to hardest.
+            Use the same concepts as the ones given to you.
+
+            Analyse the text and give your output in a textbook-style JSON format with the following structure:
             {{
-                "summary": "A brief summary of this part of the report",
-                "abnormal_results": [
-                    {{"test_name": "Test Name", "value": "Abnormal Value", "reference_range": "Normal Range", "interpretation": "Brief interpretation"}}
-                ],
-                "charts": [
-                    {{
-                        "chart_type": "bar",
-                        "title": "Chart Title",
-                        "data": [
-                            {{"label": "Category1", "value1": Number1, "value2": Number2, ...}},
-                            {{"label": "Category2", "value1": Number1, "value2": Number2, ...}},
-                            ...
-                        ]
-                    }},
-                    {{
-                        "chart_type": "area",
-                        "title": "Chart Title",
-                        "x_axis_key": "month",
-                        "data_keys": ["value1", "value2", ...],
-                        "data": [
-                            {{"month": "January", "value1": Number1, "value2": Number2, ...}},
-                            {{"month": "February", "value1": Number1, "value2": Number2, ...}},
-                            ...
+                "summary": "A full robust summary of what the course will cover",
+                "course": [
+                    {{"Day": 1, "concepts" : ["concept 1", "concept 2", "concept 3"]}}
+                    {{"Day": 2, "concepts" : ["concept 1", "concept 2", "concept 3"]}}
+                    {{"Day": 3, "concepts" : ["concept 1", "concept 2", "concept 3"]}}
                         ],
-                        "trend_percentage": 5.2,
-                        "date_range": "January - June 2024"
-                    }}
-                ],
+
+
                 "recommendations": ["Recommendation 1", "Recommendation 2", ...]
             }}
 
-            Medical Report Part {i+1}/{len(chunks)}:
+            Course Part {i+1}/{len(chunks)}:
             {chunk}
             """
 
@@ -189,8 +176,8 @@ async def analyze_medical_report(report_content: str) -> dict:
 
     combined_results = {
         "summary": " ".join([r["summary"] for r in all_results]),
-        "abnormal_results": [
-            item for r in all_results for item in r.get("abnormal_results", [])
+        "course": [
+            item for r in all_results for item in r.get("course", [])
         ],
         "charts": [item for r in all_results for item in r.get("charts", [])],
         "recommendations": [
